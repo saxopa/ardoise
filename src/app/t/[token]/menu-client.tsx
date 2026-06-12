@@ -54,6 +54,29 @@ export default function MenuClient({
     });
   }
 
+  /** Retire complètement une ligne du panier. */
+  function remove(id: string) {
+    setCart((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      // Plus rien dans le panier : on referme le récapitulatif.
+      if (Object.values(next).every((l) => l.qty <= 0)) setCheckout(false);
+      return next;
+    });
+  }
+
+  /** Ajuste une ligne depuis le récapitulatif, referme si le panier se vide. */
+  function adjustInCart(line: CartLine, delta: number) {
+    setCart((prev) => {
+      const existing = prev[line.id];
+      if (!existing) return prev;
+      const qty = Math.min(Math.max(existing.qty + delta, 0), 20);
+      const next = { ...prev, [line.id]: { ...existing, qty } };
+      if (Object.values(next).every((l) => l.qty <= 0)) setCheckout(false);
+      return next;
+    });
+  }
+
   function submit() {
     setError(null);
     startTransition(async () => {
@@ -174,13 +197,38 @@ export default function MenuClient({
             </button>
           ) : (
             <div className="animate-fade-in space-y-3">
-              <ul className="max-h-40 space-y-1 overflow-y-auto text-[15px]">
+              <ul className="max-h-52 space-y-2 overflow-y-auto text-[15px]">
                 {lines.map((l) => (
-                  <li key={l.id} className="flex justify-between">
-                    <span>
-                      {l.qty} × {l.name}
-                    </span>
-                    <span className="font-mono">
+                  <li key={l.id} className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => remove(l.id)}
+                      className="press flex size-7 shrink-0 items-center justify-center rounded-[4px] text-ardoise-mid hover:bg-[#a33b2e]/10 hover:text-[#a33b2e]"
+                      aria-label={`Retirer ${l.name}`}
+                    >
+                      ✕
+                    </button>
+                    <span className="min-w-0 flex-1 truncate">{l.name}</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => adjustInCart(l, -1)}
+                        className="press flex size-7 items-center justify-center rounded-[4px] border-[1.5px] border-terracotta text-base font-bold leading-none text-terracotta"
+                        aria-label="Retirer un"
+                      >
+                        −
+                      </button>
+                      <span className="w-5 text-center font-mono">{l.qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => adjustInCart(l, 1)}
+                        className="press flex size-7 items-center justify-center rounded-[4px] bg-terracotta text-base font-bold leading-none text-craie"
+                        aria-label="Ajouter un"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="w-16 shrink-0 text-right font-mono">
                       {formatPrice(l.price_cents * l.qty, currency)}
                     </span>
                   </li>
