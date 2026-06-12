@@ -35,6 +35,8 @@ export interface DiningTable {
   restaurant_id: string;
   label: string;
   seats: number;
+  /** Identifiant permanent encodé dans le QR imprimé (/q/<qr_uid>). */
+  qr_uid: string;
   created_at: string;
 }
 

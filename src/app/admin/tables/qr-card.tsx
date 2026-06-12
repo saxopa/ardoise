@@ -4,32 +4,32 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 
 export default function QrCard({
-  token,
+  qrUid,
   tableLabel,
   restaurantName,
-  expiresAt,
 }: {
-  token: string;
+  qrUid: string;
   tableLabel: string;
   restaurantName: string;
-  expiresAt: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [url, setUrl] = useState("");
 
   useEffect(() => {
-    const orderUrl = `${window.location.origin}/t/${token}`;
+    // QR PERMANENT : encode /q/<qr_uid>, jamais le token de session.
+    // S'imprime une seule fois ; le serveur résout la session à chaque scan.
+    const qrUrl = `${window.location.origin}/q/${qrUid}`;
     // Valeur browser-only (origin) : initialisation en effet, pattern volontaire.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUrl(orderUrl);
+    setUrl(qrUrl);
     if (canvasRef.current) {
-      QRCode.toCanvas(canvasRef.current, orderUrl, {
+      QRCode.toCanvas(canvasRef.current, qrUrl, {
         width: 180,
         margin: 1,
         color: { dark: "#1a1f1f", light: "#fafaf7" },
       });
     }
-  }, [token]);
+  }, [qrUid]);
 
   function printQr() {
     const canvas = canvasRef.current;
@@ -63,13 +63,7 @@ export default function QrCard({
         {url}
       </p>
       <p className="mt-1 text-xs text-ardoise-mid">
-        Expire le{" "}
-        {new Date(expiresAt).toLocaleString("fr-FR", {
-          day: "numeric",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+        QR permanent — à imprimer une seule fois
       </p>
       <button
         type="button"

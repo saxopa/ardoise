@@ -8,6 +8,7 @@ Contre-mesures, par couche :
 
 | Couche | Mesure | Où |
 |---|---|---|
+| QR | **QR statique permanent** (`/q/<qr_uid>`, UUID non énumérable) — n'encode jamais le token de session. Résolution serveur à chaque scan : table fermée = page d'attente, pas de menu | `tables.qr_uid`, `resolve_table_qr()` |
 | Session | Token UUID v4 (128 bits, non énumérable) par table | `table_sessions.token` |
 | Session | Expiration automatique (défaut 4 h, max 24 h) | `expires_at`, vérifié dans chaque RPC |
 | Session | Clôture manuelle par le staff → token définitivement mort | `status='closed'`, action « Clore la session » |

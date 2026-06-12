@@ -35,10 +35,10 @@ export default async function TablesPage() {
         Tables &amp; QR codes
       </h1>
       <p className="mt-2 max-w-2xl text-ardoise-mid">
-        Chaque session génère un lien unique et temporaire. Une table libérée
-        («&nbsp;Clore&nbsp;») ne peut plus recevoir de commande — même si le
-        client a gardé l&apos;adresse. Réimprimez le QR à chaque nouvelle
-        session.
+        Le QR de chaque table est <strong>permanent</strong> : imprimez-le une
+        fois, collez-le sur la table. À chaque scan, le serveur vérifie si la
+        table est ouverte. Table close («&nbsp;Clore&nbsp;») = plus aucune
+        commande possible, même pour un client qui a gardé l&apos;adresse.
       </p>
 
       <Card className="mt-8">
@@ -97,26 +97,37 @@ export default async function TablesPage() {
                 </form>
               </div>
 
+              <div className="mt-4">
+                <QrCard
+                  qrUid={table.qr_uid}
+                  tableLabel={table.label}
+                  restaurantName={restaurant.name}
+                />
+              </div>
+
               {session ? (
-                <div className="mt-4">
-                  <QrCard
-                    token={session.token}
-                    tableLabel={table.label}
-                    restaurantName={restaurant.name}
-                    expiresAt={session.expires_at}
-                  />
-                  <form action={closeSession} className="mt-3">
+                <div className="mt-3">
+                  <p className="mb-2 text-center text-sm font-medium text-[#4a6b4a]">
+                    Table ouverte — expire le{" "}
+                    {new Date(session.expires_at).toLocaleString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <form action={closeSession}>
                     <input type="hidden" name="session_id" value={session.id} />
                     <Button type="submit" variant="danger" className="w-full">
-                      Clore la session (table libérée)
+                      Clore (table libérée)
                     </Button>
                   </form>
                 </div>
               ) : (
-                <form action={openSession} className="mt-4 space-y-3">
+                <form action={openSession} className="mt-3 space-y-3">
                   <input type="hidden" name="table_id" value={table.id} />
                   <div>
-                    <Label>Durée de la session (heures)</Label>
+                    <Label>Durée d&apos;ouverture (heures)</Label>
                     <Input
                       name="hours"
                       type="number"
@@ -126,7 +137,7 @@ export default async function TablesPage() {
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    Ouvrir une session + générer le QR
+                    Ouvrir la table
                   </Button>
                 </form>
               )}

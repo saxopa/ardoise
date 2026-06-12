@@ -381,3 +381,36 @@ revoke execute on function public.get_restaurant_public(text) from public;
 grant execute on function public.get_restaurant_public(text) to anon, authenticated;
 revoke execute on function public.create_reservation(text, text, text, int, timestamptz, text, text) from public;
 grant execute on function public.create_reservation(text, text, text, int, timestamptz, text, text) to anon, authenticated;
+
+-- ---------- 5. QR STATIQUE (migration static_qr_per_table) ----------
+-- Un QR permanent par table (/q/<qr_uid>), imprimé une seule fois.
+-- Le serveur résout vers la session active du moment à chaque scan.
+
+alter table public.tables
+  add column qr_uid uuid not null unique default gen_random_uuid();
+
+create or replace function public.resolve_table_qr(p_qr_uid uuid)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare
+  v_table tables%rowtype;
+  v_token uuid;
+  v_restaurant_name text;
+begin
+  select * into v_table from tables where qr_uid = p_qr_uid;
+  if not found then return null; end if;
+
+  select name into v_restaurant_name from restaurants where id = v_table.restaurant_id;
+
+  select token into v_token from table_sessions
+  where table_id = v_table.id and status = 'active' and expires_at > now()
+  order by created_at desc limit 1;
+
+  return jsonb_build_object(
+    'restaurant_name', v_restaurant_name,
+    'table_label', v_table.label,
+    'session_token', v_token  -- null si table fermée
+  );
+end $$;
+
+revoke execute on function public.resolve_table_qr(uuid) from public;
+grant execute on function public.resolve_table_qr(uuid) to anon, authenticated;
