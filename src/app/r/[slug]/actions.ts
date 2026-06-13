@@ -1,6 +1,7 @@
 "use server";
 
 import { createAnonClient } from "@/lib/supabase/server";
+import { sendReservationConfirmation } from "@/lib/email";
 
 export type ReservationState = {
   error: string | null;
@@ -60,6 +61,21 @@ export async function submitReservation(
       error: ERROR_MESSAGES[data.error] ?? "Réservation impossible. Réessayez.",
       success: false,
     };
+  }
+
+  // Confirmation au client (best-effort). On récupère le nom du resto
+  // (déjà public) pour personnaliser. Un échec d'email ne casse pas la résa.
+  if (email) {
+    const { data: resto } = await supabase.rpc("get_restaurant_public", {
+      p_slug: slug,
+    });
+    await sendReservationConfirmation({
+      to: email,
+      restaurantName: resto?.name ?? "le restaurant",
+      customerName: name,
+      startsAt: startsAt.toISOString(),
+      partySize,
+    });
   }
 
   return { error: null, success: true };
