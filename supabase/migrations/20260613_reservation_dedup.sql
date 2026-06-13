@@ -1,0 +1,3 @@
+-- Anti-doublon réservation (2026-06-13). Double-tap/re-submit créaient 2 lignes.
+-- Voir create_reservation : dédup resto+tel+horaire sur fenêtre 5 min => renvoie l'existante.
+-- (corps complet = version courante de create_reservation dans Supabase, idempotente)
