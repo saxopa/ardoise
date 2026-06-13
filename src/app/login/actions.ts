@@ -45,7 +45,16 @@ export async function signUp(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  // emailRedirectTo : le lien de confirmation renvoie vers /auth/confirm,
+  // qui pose la session → l'utilisateur arrive connecté sur /admin.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${appUrl}/auth/confirm?next=/admin`,
+    },
+  });
   if (error) {
     return { error: "Inscription impossible : " + error.message, message: null };
   }
@@ -54,7 +63,7 @@ export async function signUp(
     return {
       error: null,
       message:
-        "Compte créé. Vérifiez votre boîte mail pour confirmer votre adresse, puis connectez-vous.",
+        "Compte créé. Vérifiez votre boîte mail : le lien vous connecte directement.",
     };
   }
   redirect("/admin");

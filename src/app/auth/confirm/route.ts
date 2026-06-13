@@ -3,13 +3,16 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Callback de confirmation email : vérifie le token_hash, pose la session
- * (cookies), puis redirige connecté vers `next` (défaut /admin).
- * Le template email Supabase doit pointer ici :
- *   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/admin
+ * Callback de confirmation email → connexion directe.
+ * Gère les deux schémas Supabase :
+ *  - flux PKCE par défaut : `?code=...` (template natif {{ .ConfirmationURL }}
+ *    + emailRedirectTo vers cette route) → exchangeCodeForSession
+ *  - template custom : `?token_hash=...&type=signup` → verifyOtp
+ * Pose la session (cookies), puis redirige connecté vers `next` (défaut /admin).
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const nextParam = searchParams.get("next") ?? "/admin";
@@ -20,15 +23,17 @@ export async function GET(request: NextRequest) {
       ? nextParam
       : "/admin";
 
-  if (tokenHash && type) {
-    const supabase = await createClient();
+  const supabase = await createClient();
+
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) return NextResponse.redirect(new URL(next, request.url));
+  } else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       type,
       token_hash: tokenHash,
     });
-    if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
-    }
+    if (!error) return NextResponse.redirect(new URL(next, request.url));
   }
 
   return NextResponse.redirect(
