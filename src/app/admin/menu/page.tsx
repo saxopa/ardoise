@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireRestaurant } from "@/lib/restaurant";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
@@ -44,6 +45,14 @@ export default async function MenuPage() {
         Les modifications sont visibles immédiatement par vos clients. Une
         rupture&nbsp;? Un clic sur «&nbsp;En rupture&nbsp;».
       </p>
+
+      {/* Import assisté par IA */}
+      <Link
+        href="/admin/menu/import"
+        className="press mt-6 inline-flex h-11 items-center rounded-[4px] bg-terracotta px-5 font-semibold text-craie transition-colors duration-150 hover:bg-terracotta-dark"
+      >
+        Importer ma carte en photo (IA) →
+      </Link>
 
       {/* Nouvelle catégorie */}
       <Card className="mt-8">
