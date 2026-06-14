@@ -146,10 +146,20 @@ export function parseMenuJson(raw: string): ParseResult {
 }
 
 /** Prompt prêt à copier que le client donnera à l'IA avec la photo de sa carte. */
-export const MENU_IMPORT_PROMPT = `Voici la carte de mon restaurant (en photo ci-jointe, ou en texte ci-dessous).
+export const MENU_IMPORT_PROMPT = `Tu aides un restaurateur à importer sa carte dans l'application "Ardoise". Voici comment Ardoise fonctionne — respecte-le scrupuleusement.
 
-Liste TOUS les plats et boissons que tu y vois. Réponds UNIQUEMENT avec un JSON valide, sans aucun texte avant ni après, en respectant EXACTEMENT ce format :
+COMMENT ARDOISE FONCTIONNE :
+1. Une carte = des catégories (Entrées, Plats, Desserts, Boissons, Formules…), chacune contenant des plats.
+2. Chaque plat a : un nom, une description (facultative) et un prix en euros (facultatif).
+3. Le prix est FACULTATIF. Si un plat n'a pas de prix affiché sur la carte (menu du jour, ardoise à formule…), mets "price": null. N'invente JAMAIS un prix.
+4. Les menus et formules (ex : "Menu du jour Entrée+Plat+Dessert à 24€") sont des plats à part entière, à placer dans une catégorie "Formules" AVEC leur prix.
+5. Important : Ardoise ne relie pas automatiquement un plat choisi à sa formule. Donc pour un menu à formule, on crée la formule avec son prix d'un côté, et on liste les plats sans prix de l'autre. À la commande, c'est le serveur qui associe le tout.
 
+AVANT DE RÉPONDRE :
+- Si la carte est simple (chaque plat a son propre prix), donne directement le JSON, sans rien autour.
+- Si la carte est particulière (menu à formule, prix groupés, plats sans prix individuel, ambiguïté), commence par 2-3 phrases SIMPLES et SANS JARGON pour expliquer au restaurateur comment tu vas l'organiser dans Ardoise et pourquoi — puis donne le JSON juste après.
+
+FORMAT EXACT (JSON valide) :
 {
   "categories": [
     {
@@ -157,14 +167,18 @@ Liste TOUS les plats et boissons que tu y vois. Réponds UNIQUEMENT avec un JSON
       "items": [
         { "name": "Salade César", "description": "Poulet, parmesan, croûtons", "price": 9.5 }
       ]
+    },
+    {
+      "name": "Formules",
+      "items": [
+        { "name": "Menu du jour E+P+D", "description": "Entrée + Plat + Dessert", "price": 24 }
+      ]
     }
   ]
 }
 
-Règles importantes :
-- "price" est un nombre en euros, sans le symbole € (exemple : 12.5).
-- Si un plat n'a PAS de prix affiché sur la carte (cas des menus à formule), mets "price": null. Ne l'invente jamais.
-- Inclus AUSSI les formules et menus avec leur prix (exemple : { "name": "Menu du jour E+P+D", "description": "Entrée + Plat + Dessert", "price": 24 }), dans une catégorie "Formules" ou "Menus".
-- Si un plat n'a pas de description, mets "description": "".
-- Regroupe les plats par catégorie selon la carte (Entrées, Plats, Desserts, Boissons, etc.).
-- N'invente rien : recopie fidèlement ce qui est sur la carte.`;
+RÈGLES DE SORTIE :
+- "price" : nombre en euros sans le symbole € (ex : 12.5), ou null si absent.
+- "description" : "" si aucune.
+- Recopie fidèlement la carte, n'invente rien.
+- Le JSON doit être pur : pas de Markdown ni de caractères spéciaux à l'intérieur.`;

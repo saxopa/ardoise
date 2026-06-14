@@ -141,8 +141,9 @@ export default function ImportClient() {
         <Step n={4} title="Collez la réponse de l'IA ici">
           <p className="text-[15px] text-ardoise-mid">
             Copiez toute la réponse de l&apos;IA et collez-la dans le cadre
-            ci-dessous. Pas grave s&apos;il y a du texte en trop, on fait le
-            ménage.
+            ci-dessous. Si votre carte est particulière (menu du jour, formules…),
+            l&apos;IA vous donnera peut-être d&apos;abord un petit conseil&nbsp;:
+            lisez-le, puis collez quand même toute sa réponse — on fait le ménage.
           </p>
           <form action={formAction} className="mt-3">
             <textarea
