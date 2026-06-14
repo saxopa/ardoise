@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { minutesSince } from "@/lib/format";
+import { printKitchenTicket } from "@/lib/print-ticket";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/types";
 
 /* Écran cuisine accessible par code-URL (tablette posée en cuisine).
@@ -147,6 +148,22 @@ export default function KitchenCodeBoard({
                   {action.label}
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() =>
+                  printKitchenTicket({
+                    orderNumber: order.order_number,
+                    tableLabel: order.table_label,
+                    createdAt: order.created_at,
+                    note: order.note,
+                    items: order.items,
+                  })
+                }
+                className="mt-3 text-sm text-creme/60 underline underline-offset-[3px] hover:text-creme"
+              >
+                Imprimer
+              </button>
             </article>
           );
         })}

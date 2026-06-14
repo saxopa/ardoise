@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useOrders, type OrderWithItems } from "@/lib/use-orders";
 import { OfflineBanner } from "@/components/offline-banner";
 import { minutesSince } from "@/lib/format";
+import { printKitchenTicket } from "@/lib/print-ticket";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/types";
 
 /* Écran cuisine : fond ardoise-night, lisible à 2 mètres,
@@ -122,6 +123,25 @@ export default function KitchenBoard({
                   {action.label}
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() =>
+                  printKitchenTicket({
+                    orderNumber: order.order_number,
+                    tableLabel: order.table_label,
+                    createdAt: order.created_at,
+                    note: order.note,
+                    items: order.order_items.map((it) => ({
+                      name: it.item_name,
+                      qty: it.quantity,
+                    })),
+                  })
+                }
+                className="mt-3 text-sm text-creme/60 underline underline-offset-[3px] hover:text-creme"
+              >
+                Imprimer
+              </button>
             </article>
           );
         })}
