@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import type { SessionMenu } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 import { placeOrder } from "./actions";
@@ -126,17 +127,27 @@ export default function MenuClient({
                   className="border-l-[3px] border-terracotta py-4 pl-4"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold leading-snug">{item.name}</p>
                       {item.description && (
                         <p className="mt-0.5 text-sm leading-relaxed text-ardoise-mid">
                           {item.description}
                         </p>
                       )}
+                      <span className="mt-1 block font-mono">
+                        {formatPrice(item.price_cents, currency)}
+                      </span>
                     </div>
-                    <span className="shrink-0 font-mono">
-                      {formatPrice(item.price_cents, currency)}
-                    </span>
+                    {item.image_url && (
+                      <Image
+                        src={item.image_url}
+                        alt={item.name}
+                        width={80}
+                        height={80}
+                        unoptimized
+                        className="size-20 shrink-0 rounded-[6px] object-cover"
+                      />
+                    )}
                   </div>
 
                   {menu.restaurant.ordering_enabled && (

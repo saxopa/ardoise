@@ -95,6 +95,29 @@ export async function toggleItemAvailability(formData: FormData) {
   revalidatePath("/admin/menu");
 }
 
+export async function setItemImage(formData: FormData) {
+  const { restaurant } = await requireRestaurant();
+  const id = String(formData.get("id") ?? "");
+  const url = String(formData.get("image_url") ?? "").trim() || null;
+  // Sécurité : n'accepter qu'une URL du bucket Storage de ce projet.
+  if (
+    url &&
+    !url.startsWith(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/menu/`
+    )
+  ) {
+    return;
+  }
+
+  const supabase = await createClient();
+  await supabase
+    .from("menu_items")
+    .update({ image_url: url })
+    .eq("id", id)
+    .eq("restaurant_id", restaurant.id);
+  revalidatePath("/admin/menu");
+}
+
 export async function deleteItem(formData: FormData) {
   const { restaurant } = await requireRestaurant();
   const id = String(formData.get("id") ?? "");

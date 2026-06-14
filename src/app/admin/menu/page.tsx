@@ -11,6 +11,7 @@ import {
   toggleItemAvailability,
 } from "./actions";
 import ItemEditor from "./item-editor";
+import ImageUpload from "./image-upload";
 
 export const metadata = { title: "Carte — Ardoise" };
 
@@ -139,6 +140,13 @@ export default async function MenuPage() {
                         </button>
                       </form>
                     </div>
+                  </div>
+                  <div className="mt-2">
+                    <ImageUpload
+                      restaurantId={restaurant.id}
+                      itemId={item.id}
+                      currentUrl={item.image_url}
+                    />
                   </div>
                 </li>
               ))}
