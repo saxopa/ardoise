@@ -153,13 +153,6 @@ export default function ServerApp({
 
   function send(hold: boolean) {
     if (view.kind !== "order" || count === 0) return;
-    // Garde-fou : 0 € = plats de menu pris sans la formule. On bloque l'envoi.
-    if (total === 0) {
-      setMsg(
-        "Total à 0 € : ajoutez la formule (Menu…) avant d'envoyer, sinon rien ne sera facturé."
-      );
-      return;
-    }
     const token = view.token;
     setBusy(true);
     setMsg(null);

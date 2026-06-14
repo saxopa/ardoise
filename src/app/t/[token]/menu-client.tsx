@@ -120,13 +120,6 @@ export default function MenuClient({
 
   function submit() {
     setError(null);
-    // Garde-fou : une commande à 0 € = des plats de menu choisis sans la formule.
-    if (total === 0) {
-      setError(
-        "Votre commande est à 0 €. Si vous prenez un menu, ajoutez d'abord la formule (rubrique « Formules »)."
-      );
-      return;
-    }
     startTransition(async () => {
       const result = await placeOrder(
         token,
