@@ -60,6 +60,53 @@ export async function openSession(formData: FormData) {
   revalidatePath("/admin/tables");
 }
 
+/** Ouvre le service : crée une session pour chaque table sans session active. */
+export async function openAllTables() {
+  const { restaurant } = await requireRestaurant();
+  const supabase = await createClient();
+
+  // Toutes les tables du restaurant.
+  const { data: tables } = await supabase
+    .from("tables")
+    .select("id")
+    .eq("restaurant_id", restaurant.id);
+  if (!tables || tables.length === 0) return;
+
+  // Tables ayant déjà une session active non expirée : on ne les rouvre pas.
+  const { data: sessions } = await supabase
+    .from("table_sessions")
+    .select("table_id")
+    .eq("restaurant_id", restaurant.id)
+    .eq("status", "active")
+    .gt("expires_at", new Date().toISOString());
+  const openTableIds = new Set((sessions ?? []).map((s) => s.table_id));
+
+  const expiresAt = new Date(Date.now() + 6 * 3600000).toISOString();
+  const rows = tables
+    .filter((t) => !openTableIds.has(t.id))
+    .map((t) => ({
+      restaurant_id: restaurant.id,
+      table_id: t.id,
+      expires_at: expiresAt,
+    }));
+  if (rows.length === 0) return;
+
+  await supabase.from("table_sessions").insert(rows);
+  revalidatePath("/admin/tables");
+}
+
+/** Clôt toutes les sessions actives du restaurant en une fois. */
+export async function closeAllSessions() {
+  const { restaurant } = await requireRestaurant();
+  const supabase = await createClient();
+  await supabase
+    .from("table_sessions")
+    .update({ status: "closed", closed_at: new Date().toISOString() })
+    .eq("restaurant_id", restaurant.id)
+    .eq("status", "active");
+  revalidatePath("/admin/tables");
+}
+
 /** Clôt la session active — la table ne peut plus recevoir de commandes. */
 export async function closeSession(formData: FormData) {
   const { restaurant } = await requireRestaurant();

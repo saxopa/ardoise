@@ -2,7 +2,14 @@ import { requireRestaurant } from "@/lib/restaurant";
 import { createClient } from "@/lib/supabase/server";
 import type { DiningTable, TableSession } from "@/lib/types";
 import { Button, Card, Input, Label } from "@/components/ui";
-import { closeSession, createTable, deleteTable, openSession } from "./actions";
+import {
+  closeAllSessions,
+  closeSession,
+  createTable,
+  deleteTable,
+  openAllTables,
+  openSession,
+} from "./actions";
 import QrCard from "./qr-card";
 
 export const metadata = { title: "Tables & QR — Ardoise" };
@@ -40,6 +47,19 @@ export default async function TablesPage() {
         table est ouverte. Table close («&nbsp;Clore&nbsp;») = plus aucune
         commande possible, même pour un client qui a gardé l&apos;adresse.
       </p>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <form action={openAllTables}>
+          <Button type="submit" variant="primary">
+            Ouvrir tout le service
+          </Button>
+        </form>
+        <form action={closeAllSessions}>
+          <Button type="submit" variant="danger">
+            Clôturer tout le service
+          </Button>
+        </form>
+      </div>
 
       <Card className="mt-8">
         <form action={createTable} className="flex flex-wrap items-end gap-3">

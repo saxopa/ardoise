@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useOrders, type OrderWithItems } from "@/lib/use-orders";
+import { OfflineBanner } from "@/components/offline-banner";
 import { minutesSince } from "@/lib/format";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/types";
 
@@ -30,7 +31,10 @@ export default function KitchenBoard({
   restaurantName: string;
   initialOrders: OrderWithItems[];
 }) {
-  const { orders, updateStatus } = useOrders(restaurantId, initialOrders);
+  const { orders, updateStatus, connected } = useOrders(
+    restaurantId,
+    initialOrders
+  );
 
   const active = orders
     .filter((o) =>
@@ -43,6 +47,7 @@ export default function KitchenBoard({
 
   return (
     <div className="min-h-screen flex-1 bg-ardoise-night p-6 text-creme">
+      <OfflineBanner connected={connected} />
       <header className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">
           Cuisine — {restaurantName}

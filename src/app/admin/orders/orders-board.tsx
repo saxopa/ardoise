@@ -9,6 +9,7 @@ import {
   type OrderStatus,
 } from "@/lib/types";
 import { Badge, Card } from "@/components/ui";
+import { OfflineBanner } from "@/components/offline-banner";
 
 const FILTERS: { value: OrderStatus | "all" | "active"; label: string }[] = [
   { value: "active", label: "En cours" },
@@ -33,7 +34,10 @@ export default function OrdersBoard({
   currency: string;
   initialOrders: OrderWithItems[];
 }) {
-  const { orders, updateStatus } = useOrders(restaurantId, initialOrders);
+  const { orders, updateStatus, connected } = useOrders(
+    restaurantId,
+    initialOrders
+  );
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["value"]>("active");
 
   const visible = orders.filter((o) => {
@@ -45,6 +49,7 @@ export default function OrdersBoard({
 
   return (
     <div className="mt-6">
+      <OfflineBanner connected={connected} />
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button

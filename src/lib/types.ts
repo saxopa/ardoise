@@ -26,6 +26,9 @@ export interface Restaurant {
   timezone: string;
   ordering_enabled: boolean;
   reservations_enabled: boolean;
+  /** Codes d'accès par rôle (URLs /k/<code> et /s/<code>), sans compte patron. */
+  kitchen_code: string;
+  server_code: string;
   created_at: string;
   updated_at: string;
 }
