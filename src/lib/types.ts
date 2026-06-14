@@ -68,7 +68,8 @@ export interface MenuItem {
   category_id: string;
   name: string;
   description: string | null;
-  price_cents: number;
+  /** null = plat sans prix unitaire (menu à formule). */
+  price_cents: number | null;
   image_url: string | null;
   is_available: boolean;
   sort_order: number;
@@ -130,7 +131,7 @@ export interface SessionMenu {
       id: string;
       name: string;
       description: string | null;
-      price_cents: number;
+      price_cents: number | null;
       image_url: string | null;
     }[];
   }[];

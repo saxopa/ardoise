@@ -82,9 +82,14 @@ export default function MenuClient({
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refreshMenu]);
 
-  function add(item: { id: string; name: string; price_cents: number }, delta: number) {
+  function add(
+    item: { id: string; name: string; price_cents: number | null },
+    delta: number
+  ) {
     setCart((prev) => {
-      const existing = prev[item.id] ?? { ...item, qty: 0 };
+      // Plat sans prix (formule) → compté 0 dans le total indicatif.
+      const existing =
+        prev[item.id] ?? { id: item.id, name: item.name, price_cents: item.price_cents ?? 0, qty: 0 };
       const qty = Math.min(Math.max(existing.qty + delta, 0), 20);
       return { ...prev, [item.id]: { ...existing, qty } };
     });
@@ -191,9 +196,11 @@ export default function MenuClient({
                           {item.description}
                         </p>
                       )}
-                      <span className="mt-1 block font-mono">
-                        {formatPrice(item.price_cents, currency)}
-                      </span>
+                      {item.price_cents !== null && (
+                        <span className="mt-1 block font-mono">
+                          {formatPrice(item.price_cents, currency)}
+                        </span>
+                      )}
                     </div>
                   </div>
 

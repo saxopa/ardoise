@@ -128,11 +128,18 @@ export default function ServerApp({
   }
 
   function adjust(
-    item: { id: string; name: string; price_cents: number },
+    item: { id: string; name: string; price_cents: number | null },
     delta: number
   ) {
     setCart((prev) => {
-      const existing = prev[item.id] ?? { ...item, qty: 0 };
+      const existing =
+        prev[item.id] ??
+        {
+          id: item.id,
+          name: item.name,
+          price_cents: item.price_cents ?? 0, // formule = 0 dans le total indicatif
+          qty: 0,
+        };
       const qty = Math.min(Math.max(existing.qty + delta, 0), 20);
       const next = { ...prev, [item.id]: { ...existing, qty } };
       if (qty === 0) delete next[item.id];
@@ -288,7 +295,9 @@ export default function ServerApp({
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold leading-snug">{item.name}</p>
                       <span className="font-mono text-sm text-ardoise-mid">
-                        {formatPrice(item.price_cents, currency)}
+                        {item.price_cents === null
+                          ? "formule"
+                          : formatPrice(item.price_cents, currency)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

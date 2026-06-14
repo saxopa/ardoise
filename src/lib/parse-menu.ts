@@ -9,7 +9,8 @@
 export type ParsedItem = {
   name: string;
   description: string;
-  price_cents: number;
+  /** null = plat sans prix unitaire (menu à formule). */
+  price_cents: number | null;
 };
 export type ParsedCategory = { name: string; items: ParsedItem[] };
 export type ParseResult = {
@@ -112,10 +113,11 @@ export function parseMenuJson(raw: string): ParseResult {
         0,
         100
       );
+      // Le prix est OPTIONNEL : un plat sans prix (menu à formule) reste valide.
       const cents = toCents(
         item.price ?? item.prix ?? item.tarif ?? item.amount ?? item.montant
       );
-      if (!iName || cents === null) {
+      if (!iName) {
         ignored++;
         continue;
       }
@@ -161,6 +163,8 @@ Liste TOUS les plats et boissons que tu y vois. Réponds UNIQUEMENT avec un JSON
 
 Règles importantes :
 - "price" est un nombre en euros, sans le symbole € (exemple : 12.5).
+- Si un plat n'a PAS de prix affiché sur la carte (cas des menus à formule), mets "price": null. Ne l'invente jamais.
+- Inclus AUSSI les formules et menus avec leur prix (exemple : { "name": "Menu du jour E+P+D", "description": "Entrée + Plat + Dessert", "price": 24 }), dans une catégorie "Formules" ou "Menus".
 - Si un plat n'a pas de description, mets "description": "".
 - Regroupe les plats par catégorie selon la carte (Entrées, Plats, Desserts, Boissons, etc.).
 - N'invente rien : recopie fidèlement ce qui est sur la carte.`;

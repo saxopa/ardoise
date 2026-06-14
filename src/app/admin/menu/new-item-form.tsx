@@ -26,7 +26,7 @@ export default function NewItemForm({
   }
 
   async function submit() {
-    if (!name.trim() || !price.trim()) return;
+    if (!name.trim()) return; // le prix est optionnel (menu à formule)
     setBusy(true);
     try {
       let imageUrl = "";
@@ -67,7 +67,7 @@ export default function NewItemForm({
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             inputMode="decimal"
-            placeholder="14,50"
+            placeholder="14,50 — ou vide si formule"
           />
         </div>
       </div>

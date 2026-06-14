@@ -122,7 +122,9 @@ export default async function MenuPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-mono">
-                        {formatPrice(item.price_cents, restaurant.currency)}
+                        {item.price_cents === null
+                          ? "—"
+                          : formatPrice(item.price_cents, restaurant.currency)}
                       </span>
                       <form action={toggleItemAvailability}>
                         <input type="hidden" name="id" value={item.id} />

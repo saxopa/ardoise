@@ -46,8 +46,12 @@ export default function ItemEditor({
             <Input
               name="price"
               inputMode="decimal"
-              defaultValue={(item.price_cents / 100).toFixed(2).replace(".", ",")}
-              required
+              placeholder="vide si formule"
+              defaultValue={
+                item.price_cents === null
+                  ? ""
+                  : (item.price_cents / 100).toFixed(2).replace(".", ",")
+              }
             />
           </div>
           <div>

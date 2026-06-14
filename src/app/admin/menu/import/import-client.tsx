@@ -179,7 +179,9 @@ export default function ImportClient() {
                           <li key={ii} className="flex justify-between gap-3">
                             <span className="truncate">{it.name}</span>
                             <span className="shrink-0 font-mono text-ardoise-mid">
-                              {formatPrice(it.price_cents)}
+                              {it.price_cents === null
+                                ? "—"
+                                : formatPrice(it.price_cents)}
                             </span>
                           </li>
                         ))}

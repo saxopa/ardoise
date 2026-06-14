@@ -7,8 +7,10 @@ import { requireRestaurant } from "@/lib/restaurant";
 /* La RLS garantit déjà l'isolation par propriétaire ; on revérifie le
    restaurant côté serveur pour des messages d'erreur propres. */
 
+/** Prix optionnel : chaîne vide ou illisible → null (plat sans prix, menu à formule). */
 function parsePrice(input: unknown): number | null {
   const raw = String(input ?? "").replace(",", ".").trim();
+  if (!raw) return null;
   const value = Number.parseFloat(raw);
   if (!Number.isFinite(value) || value < 0 || value > 10000) return null;
   return Math.round(value * 100);
@@ -58,9 +60,9 @@ export async function createItem(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const categoryId = String(formData.get("category_id") ?? "");
   const description = String(formData.get("description") ?? "").trim() || null;
-  const priceCents = parsePrice(formData.get("price"));
+  const priceCents = parsePrice(formData.get("price")); // null = sans prix (formule)
   const imageUrl = safeImageUrl(formData.get("image_url"));
-  if (!name || name.length > 100 || priceCents === null || !categoryId) return;
+  if (!name || name.length > 100 || !categoryId) return;
 
   const supabase = await createClient();
   await supabase.from("menu_items").insert({
@@ -79,8 +81,8 @@ export async function updateItem(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
-  const priceCents = parsePrice(formData.get("price"));
-  if (!id || !name || priceCents === null) return;
+  const priceCents = parsePrice(formData.get("price")); // null = sans prix (formule)
+  if (!id || !name) return;
 
   const supabase = await createClient();
   await supabase

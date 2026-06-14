@@ -5,6 +5,14 @@ export function formatPrice(cents: number, currency = "EUR"): string {
   }).format(cents / 100);
 }
 
+/** Prix optionnel : null = plat sans prix unitaire (menu à formule). */
+export function formatPriceMaybe(
+  cents: number | null,
+  currency = "EUR"
+): string | null {
+  return cents === null ? null : formatPrice(cents, currency);
+}
+
 export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("fr-FR", {
     hour: "2-digit",
