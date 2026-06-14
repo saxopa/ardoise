@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import type { SessionMenu } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
+import { createClient } from "@/lib/supabase/client";
 import { placeOrder } from "./actions";
 
 /* Menu client mobile : sticky headers de section sur fond ardoise,
@@ -13,11 +14,12 @@ type CartLine = { id: string; name: string; price_cents: number; qty: number };
 
 export default function MenuClient({
   token,
-  menu,
+  menu: initialMenu,
 }: {
   token: string;
   menu: SessionMenu;
 }) {
+  const [menu, setMenu] = useState(initialMenu);
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [checkout, setCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -46,6 +48,36 @@ export default function MenuClient({
   const total = lines.reduce((sum, l) => sum + l.price_cents * l.qty, 0);
   const count = lines.reduce((sum, l) => sum + l.qty, 0);
   const currency = menu.restaurant.currency;
+
+  /**
+   * Re-charge la carte (plats dispo) et purge du panier ce qui a disparu —
+   * un plat passé en rupture par l'admin n'est plus commandable. Pas de
+   * connexion temps réel permanente : on rafraîchit quand le client revient
+   * sur l'app (focus) et après une erreur de commande.
+   */
+  const refreshMenu = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase.rpc("get_session_menu", { p_token: token });
+    if (!data) return; // session fermée/expirée : on ne touche pas l'affichage
+    const fresh = data as SessionMenu;
+    setMenu(fresh);
+    const ids = new Set(
+      fresh.categories.flatMap((c) => c.items.map((i) => i.id))
+    );
+    setCart((prev) => {
+      const next: Record<string, CartLine> = {};
+      for (const [k, v] of Object.entries(prev)) if (ids.has(k)) next[k] = v;
+      return next;
+    });
+  }, [token]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshMenu();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refreshMenu]);
 
   function add(item: { id: string; name: string; price_cents: number }, delta: number) {
     setCart((prev) => {
@@ -88,8 +120,11 @@ export default function MenuClient({
         note.trim()
       );
       // En cas de succès, placeOrder redirige — on n'arrive ici que sur erreur.
-      if (result?.error) setError(result.error);
-      else localStorage.removeItem(storageKey);
+      if (result?.error) {
+        setError(result.error);
+        // Un plat a pu passer en rupture : on resynchronise la carte + le panier.
+        void refreshMenu();
+      } else localStorage.removeItem(storageKey);
     });
   }
 
@@ -126,7 +161,17 @@ export default function MenuClient({
                   key={item.id}
                   className="border-l-[3px] border-terracotta py-4 pl-4"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    {item.image_url && (
+                      <Image
+                        src={item.image_url}
+                        alt={item.name}
+                        width={80}
+                        height={80}
+                        unoptimized
+                        className="size-20 shrink-0 self-center rounded-[6px] object-cover"
+                      />
+                    )}
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold leading-snug">{item.name}</p>
                       {item.description && (
@@ -138,16 +183,6 @@ export default function MenuClient({
                         {formatPrice(item.price_cents, currency)}
                       </span>
                     </div>
-                    {item.image_url && (
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        width={80}
-                        height={80}
-                        unoptimized
-                        className="size-20 shrink-0 rounded-[6px] object-cover"
-                      />
-                    )}
                   </div>
 
                   {menu.restaurant.ordering_enabled && (

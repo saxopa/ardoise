@@ -2,16 +2,16 @@ import { requireRestaurant } from "@/lib/restaurant";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
 import type { MenuCategory, MenuItem } from "@/lib/types";
-import { Badge, Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { Badge, Button, Card, Input, Label } from "@/components/ui";
 import {
   createCategory,
-  createItem,
   deleteCategory,
   deleteItem,
   toggleItemAvailability,
 } from "./actions";
 import ItemEditor from "./item-editor";
 import ImageUpload from "./image-upload";
+import NewItemForm from "./new-item-form";
 
 export const metadata = { title: "Carte — Ardoise" };
 
@@ -157,31 +157,7 @@ export default async function MenuPage() {
               <summary className="cursor-pointer text-[15px] font-medium text-terracotta">
                 + Ajouter un plat dans «&nbsp;{cat.name}&nbsp;»
               </summary>
-              <form action={createItem} className="mt-4 space-y-4 rounded-[8px] border border-ardoise-deep/12 bg-craie p-4">
-                <input type="hidden" name="category_id" value={cat.id} />
-                <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
-                  <div>
-                    <Label>Nom du plat</Label>
-                    <Input name="name" maxLength={100} required />
-                  </div>
-                  <div>
-                    <Label>Prix (€)</Label>
-                    <Input
-                      name="price"
-                      inputMode="decimal"
-                      placeholder="14,50"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Description (optionnelle)</Label>
-                  <Textarea name="description" rows={2} maxLength={400} />
-                </div>
-                <Button type="submit" variant="secondary">
-                  Ajouter le plat
-                </Button>
-              </form>
+              <NewItemForm restaurantId={restaurant.id} categoryId={cat.id} />
             </details>
           </section>
         );

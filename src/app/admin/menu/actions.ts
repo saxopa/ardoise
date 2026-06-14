@@ -14,6 +14,14 @@ function parsePrice(input: unknown): number | null {
   return Math.round(value * 100);
 }
 
+/** N'accepte qu'une URL du bucket Storage `menu` de ce projet (anti-injection). */
+function safeImageUrl(input: unknown): string | null {
+  const url = String(input ?? "").trim();
+  if (!url) return null;
+  const prefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/menu/`;
+  return url.startsWith(prefix) ? url : null;
+}
+
 export async function createCategory(formData: FormData) {
   const { restaurant } = await requireRestaurant();
   const name = String(formData.get("name") ?? "").trim();
@@ -51,6 +59,7 @@ export async function createItem(formData: FormData) {
   const categoryId = String(formData.get("category_id") ?? "");
   const description = String(formData.get("description") ?? "").trim() || null;
   const priceCents = parsePrice(formData.get("price"));
+  const imageUrl = safeImageUrl(formData.get("image_url"));
   if (!name || name.length > 100 || priceCents === null || !categoryId) return;
 
   const supabase = await createClient();
@@ -60,6 +69,7 @@ export async function createItem(formData: FormData) {
     name,
     description,
     price_cents: priceCents,
+    image_url: imageUrl,
   });
   revalidatePath("/admin/menu");
 }
@@ -98,16 +108,7 @@ export async function toggleItemAvailability(formData: FormData) {
 export async function setItemImage(formData: FormData) {
   const { restaurant } = await requireRestaurant();
   const id = String(formData.get("id") ?? "");
-  const url = String(formData.get("image_url") ?? "").trim() || null;
-  // Sécurité : n'accepter qu'une URL du bucket Storage de ce projet.
-  if (
-    url &&
-    !url.startsWith(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/menu/`
-    )
-  ) {
-    return;
-  }
+  const url = safeImageUrl(formData.get("image_url"));
 
   const supabase = await createClient();
   await supabase
