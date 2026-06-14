@@ -153,6 +153,13 @@ export default function ServerApp({
 
   function send(hold: boolean) {
     if (view.kind !== "order" || count === 0) return;
+    // Garde-fou : 0 € = plats de menu pris sans la formule. On bloque l'envoi.
+    if (total === 0) {
+      setMsg(
+        "Total à 0 € : ajoutez la formule (Menu…) avant d'envoyer, sinon rien ne sera facturé."
+      );
+      return;
+    }
     const token = view.token;
     setBusy(true);
     setMsg(null);
@@ -330,6 +337,11 @@ export default function ServerApp({
 
         {count > 0 && (
           <div className="fixed inset-x-0 bottom-0 z-20 space-y-2 border-t border-ardoise-deep/15 bg-craie p-4">
+            {msg && (
+              <p className="rounded-[4px] bg-[#a33b2e]/10 px-3 py-2 text-sm font-medium text-[#a33b2e]">
+                {msg}
+              </p>
+            )}
             <div className="flex justify-between font-mono text-sm text-ardoise-mid">
               <span>{count} article{count > 1 ? "s" : ""}</span>
               <span>{formatPrice(total, currency)}</span>

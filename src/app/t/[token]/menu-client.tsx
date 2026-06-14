@@ -120,6 +120,13 @@ export default function MenuClient({
 
   function submit() {
     setError(null);
+    // Garde-fou : une commande à 0 € = des plats de menu choisis sans la formule.
+    if (total === 0) {
+      setError(
+        "Votre commande est à 0 €. Si vous prenez un menu, ajoutez d'abord la formule (rubrique « Formules »)."
+      );
+      return;
+    }
     startTransition(async () => {
       const result = await placeOrder(
         token,
@@ -196,9 +203,13 @@ export default function MenuClient({
                           {item.description}
                         </p>
                       )}
-                      {item.price_cents !== null && (
+                      {item.price_cents !== null ? (
                         <span className="mt-1 block font-mono">
                           {formatPrice(item.price_cents, currency)}
+                        </span>
+                      ) : (
+                        <span className="mt-1 block text-sm text-ardoise-mid">
+                          Au menu / formule
                         </span>
                       )}
                     </div>
