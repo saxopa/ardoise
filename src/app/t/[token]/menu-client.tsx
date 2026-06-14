@@ -25,6 +25,9 @@ export default function MenuClient({
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [zoomed, setZoomed] = useState<{ url: string; name: string } | null>(
+    null
+  );
   const [pending, startTransition] = useTransition();
 
   const storageKey = `ardoise-cart-${token}`;
@@ -163,14 +166,23 @@ export default function MenuClient({
                 >
                   <div className="flex items-center gap-4">
                     {item.image_url && (
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        width={80}
-                        height={80}
-                        unoptimized
-                        className="size-20 shrink-0 self-center rounded-[6px] object-cover"
-                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setZoomed({ url: item.image_url!, name: item.name })
+                        }
+                        className="shrink-0 self-center"
+                        aria-label={`Voir ${item.name} en grand`}
+                      >
+                        <Image
+                          src={item.image_url}
+                          alt={item.name}
+                          width={80}
+                          height={80}
+                          unoptimized
+                          className="size-20 cursor-zoom-in rounded-[6px] object-cover"
+                        />
+                      </button>
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold leading-snug">{item.name}</p>
@@ -323,6 +335,30 @@ export default function MenuClient({
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Vue agrandie de la photo */}
+      {zoomed && (
+        <div
+          onClick={() => setZoomed(null)}
+          className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-encre/85 p-4"
+        >
+          <Image
+            src={zoomed.url}
+            alt={zoomed.name}
+            width={900}
+            height={900}
+            unoptimized
+            className="max-h-[85vh] w-auto max-w-full rounded-[8px] object-contain"
+          />
+          <button
+            type="button"
+            aria-label="Fermer"
+            className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-craie/90 text-xl font-bold text-encre"
+          >
+            ✕
+          </button>
         </div>
       )}
     </main>
