@@ -55,6 +55,65 @@ export async function deleteCategory(formData: FormData) {
   revalidatePath("/admin/menu");
 }
 
+const COURSE_TYPES = ["entree", "plat", "dessert", "autre"] as const;
+
+/** Définit le type de cours d'une catégorie (entrée/plat/dessert) — base du moteur de formules. */
+export async function setCategoryCourse(formData: FormData) {
+  const { restaurant } = await requireRestaurant();
+  const id = String(formData.get("id") ?? "");
+  const raw = String(formData.get("course_type") ?? "");
+  const course = (COURSE_TYPES as readonly string[]).includes(raw) ? raw : null;
+
+  const supabase = await createClient();
+  await supabase
+    .from("menu_categories")
+    .update({ course_type: course })
+    .eq("id", id)
+    .eq("restaurant_id", restaurant.id);
+  revalidatePath("/admin/menu");
+}
+
+/** Crée une formule (ex. Entrée+Plat+Dessert = 29€). */
+export async function createFormula(formData: FormData) {
+  const { restaurant } = await requireRestaurant();
+  const label = String(formData.get("label") ?? "").trim();
+  const courses = formData
+    .getAll("courses")
+    .map(String)
+    .filter((c) => (COURSE_TYPES as readonly string[]).includes(c));
+  const priceCents = parsePrice(formData.get("price"));
+  if (!label || label.length > 60 || courses.length < 2 || priceCents === null) {
+    return; // une formule = au moins 2 cours + un prix
+  }
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("formulas")
+    .select("*", { count: "exact", head: true })
+    .eq("restaurant_id", restaurant.id);
+
+  await supabase.from("formulas").insert({
+    restaurant_id: restaurant.id,
+    label,
+    course_types: courses,
+    price_cents: priceCents,
+    sort_order: count ?? 0,
+  });
+  revalidatePath("/admin/menu");
+}
+
+export async function deleteFormula(formData: FormData) {
+  const { restaurant } = await requireRestaurant();
+  const id = String(formData.get("id") ?? "");
+  const supabase = await createClient();
+  await supabase
+    .from("formulas")
+    .delete()
+    .eq("id", id)
+    .eq("restaurant_id", restaurant.id);
+  revalidatePath("/admin/menu");
+}
+
 export async function createItem(formData: FormData) {
   const { restaurant } = await requireRestaurant();
   const name = String(formData.get("name") ?? "").trim();

@@ -2,12 +2,20 @@ import Link from "next/link";
 import { requireRestaurant } from "@/lib/restaurant";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/format";
-import type { MenuCategory, MenuItem } from "@/lib/types";
+import {
+  COURSE_LABELS,
+  type Formula,
+  type MenuCategory,
+  type MenuItem,
+} from "@/lib/types";
 import { Badge, Button, Card, Input, Label } from "@/components/ui";
 import {
   createCategory,
+  createFormula,
   deleteCategory,
+  deleteFormula,
   deleteItem,
+  setCategoryCourse,
   toggleItemAvailability,
 } from "./actions";
 import ItemEditor from "./item-editor";
@@ -20,21 +28,28 @@ export default async function MenuPage() {
   const { restaurant } = await requireRestaurant();
   const supabase = await createClient();
 
-  const [{ data: categories }, { data: items }] = await Promise.all([
-    supabase
-      .from("menu_categories")
-      .select("*")
-      .eq("restaurant_id", restaurant.id)
-      .order("sort_order"),
-    supabase
-      .from("menu_items")
-      .select("*")
-      .eq("restaurant_id", restaurant.id)
-      .order("sort_order"),
-  ]);
+  const [{ data: categories }, { data: items }, { data: formulasData }] =
+    await Promise.all([
+      supabase
+        .from("menu_categories")
+        .select("*")
+        .eq("restaurant_id", restaurant.id)
+        .order("sort_order"),
+      supabase
+        .from("menu_items")
+        .select("*")
+        .eq("restaurant_id", restaurant.id)
+        .order("sort_order"),
+      supabase
+        .from("formulas")
+        .select("*")
+        .eq("restaurant_id", restaurant.id)
+        .order("sort_order"),
+    ]);
 
   const cats = (categories ?? []) as MenuCategory[];
   const allItems = (items ?? []) as MenuItem[];
+  const formulas = (formulasData ?? []) as Formula[];
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -53,6 +68,87 @@ export default async function MenuPage() {
       >
         Importer ma carte en photo (IA) →
       </Link>
+
+      {/* Formules / menus */}
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-bold">Formules &amp; menus</h2>
+        <p className="mt-1 text-[15px] text-ardoise-mid">
+          Définissez vos menus (ex. Entrée + Plat + Dessert = 29&nbsp;€). Le prix
+          s&apos;applique automatiquement, <strong>par personne</strong>, quand
+          un convive prend les cours requis. Pensez à indiquer le cours de
+          chaque catégorie (ci-dessous).
+        </p>
+
+        <div className="mt-4 space-y-2">
+          {formulas.map((f) => (
+            <div
+              key={f.id}
+              className="flex items-center justify-between gap-3 rounded-[8px] border border-ardoise-deep/12 bg-craie p-3"
+            >
+              <div>
+                <span className="font-semibold">{f.label}</span>
+                <span className="ml-2 text-sm text-ardoise-mid">
+                  {f.course_types.map((c) => COURSE_LABELS[c]).join(" + ")}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-mono">
+                  {formatPrice(f.price_cents, restaurant.currency)}
+                </span>
+                <form action={deleteFormula}>
+                  <input type="hidden" name="id" value={f.id} />
+                  <button
+                    type="submit"
+                    className="text-sm text-[#a33b2e]/70 underline underline-offset-[3px] hover:text-[#a33b2e]"
+                  >
+                    Supprimer
+                  </button>
+                </form>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <details className="mt-4">
+          <summary className="cursor-pointer text-[15px] font-medium text-terracotta">
+            + Créer une formule
+          </summary>
+          <form
+            action={createFormula}
+            className="mt-4 space-y-4 rounded-[8px] border border-ardoise-deep/12 bg-craie p-4"
+          >
+            <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+              <div>
+                <Label>Nom de la formule</Label>
+                <Input name="label" placeholder="Menu E+P+D" maxLength={60} required />
+              </div>
+              <div>
+                <Label>Prix (€)</Label>
+                <Input name="price" inputMode="decimal" placeholder="29" required />
+              </div>
+            </div>
+            <div>
+              <Label>Cours inclus</Label>
+              <div className="mt-1 flex flex-wrap gap-4">
+                {(["entree", "plat", "dessert"] as const).map((c) => (
+                  <label key={c} className="flex items-center gap-2 text-[15px]">
+                    <input
+                      type="checkbox"
+                      name="courses"
+                      value={c}
+                      className="size-4 accent-terracotta"
+                    />
+                    {COURSE_LABELS[c]}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <Button type="submit" variant="secondary">
+              Créer la formule
+            </Button>
+          </form>
+        </details>
+      </section>
 
       {/* Nouvelle catégorie */}
       <Card className="mt-8">
@@ -83,17 +179,40 @@ export default async function MenuPage() {
         const catItems = allItems.filter((i) => i.category_id === cat.id);
         return (
           <section key={cat.id} className="mt-10">
-            <div className="flex items-baseline justify-between border-b border-ardoise-deep/12 pb-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-ardoise-deep/12 pb-2">
               <h2 className="font-display text-xl font-bold">{cat.name}</h2>
-              <form action={deleteCategory}>
-                <input type="hidden" name="id" value={cat.id} />
-                <button
-                  type="submit"
-                  className="text-sm text-[#a33b2e]/70 underline underline-offset-[3px] hover:text-[#a33b2e]"
-                >
-                  Supprimer la catégorie
-                </button>
-              </form>
+              <div className="flex items-center gap-4">
+                {/* Cours de la catégorie (pour les formules) */}
+                <form action={setCategoryCourse} className="flex items-center gap-1">
+                  <input type="hidden" name="id" value={cat.id} />
+                  <select
+                    name="course_type"
+                    defaultValue={cat.course_type ?? ""}
+                    className="h-8 rounded-[4px] border border-ardoise-deep/15 bg-craie px-2 text-sm text-ardoise-mid outline-none focus:border-terracotta"
+                  >
+                    <option value="">Cours…</option>
+                    <option value="entree">Entrée</option>
+                    <option value="plat">Plat</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                  <button
+                    type="submit"
+                    className="text-sm text-terracotta underline underline-offset-[3px]"
+                  >
+                    OK
+                  </button>
+                </form>
+                <form action={deleteCategory}>
+                  <input type="hidden" name="id" value={cat.id} />
+                  <button
+                    type="submit"
+                    className="text-sm text-[#a33b2e]/70 underline underline-offset-[3px] hover:text-[#a33b2e]"
+                  >
+                    Supprimer
+                  </button>
+                </form>
+              </div>
             </div>
 
             <ul className="mt-4 space-y-3">

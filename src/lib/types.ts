@@ -54,13 +54,34 @@ export interface TableSession {
   closed_at: string | null;
 }
 
+export type CourseType = "entree" | "plat" | "dessert" | "autre";
+
 export interface MenuCategory {
   id: string;
   restaurant_id: string;
   name: string;
+  /** Type de cours pour le moteur de formules (null = non classé). */
+  course_type: CourseType | null;
   sort_order: number;
   created_at: string;
 }
+
+export interface Formula {
+  id: string;
+  restaurant_id: string;
+  label: string;
+  course_types: CourseType[];
+  price_cents: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export const COURSE_LABELS: Record<CourseType, string> = {
+  entree: "Entrée",
+  plat: "Plat",
+  dessert: "Dessert",
+  autre: "Autre",
+};
 
 export interface MenuItem {
   id: string;
